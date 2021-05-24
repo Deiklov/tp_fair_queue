@@ -20,5 +20,6 @@ rinkeby_address = "0xb0Ea766e0D0160F6e97c5B0B8B7b63F34c783e8A"
 def main():
     if network.show_active() == "rinkeby":
         dev = accounts.add(os.getenv("PRIVATE_KEY"))
-        return Queue.deploy(int(time.time()) + 10000000, 300, 1 * 10 ** 18, rinkeby_address, 15, {'from': dev},
+        return Queue.deploy(int(time.time()) + 100, int(time.time()) + 1 * 10 ** 6, "Test queue", 20, 0,
+                            15, {'from': dev},
                             publish_source=True)

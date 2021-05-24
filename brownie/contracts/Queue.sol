@@ -16,7 +16,7 @@ contract Queue {
     event Allowance(address slave, address master);
     event ParticipantExchanged(address _address1, string name1, uint256 pos1, address _address2, string name2, uint256 pos2);
 
-    string private _eventName;
+    string public eventName;
 
     uint256 public startTime;
     uint256 public endTime;
@@ -59,10 +59,10 @@ contract Queue {
 
     constructor(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee){
         require(block.timestamp < start, "Event must not have already begun");
-        require(block.timestamp > end, "Event must not have already finished");
+        require(block.timestamp < end, "Event must not have already finished");
         startTime = start;
         endTime = end;
-        _eventName = title;
+        eventName = title;
         maxParticipants = maxLength;
         minFee = _minFee;
     }
@@ -71,25 +71,13 @@ contract Queue {
         return ESP;
     }
     //моя позиция в очереди
-    function getMyPosition() external returns (uint256) {
+    function getMyPosition() external view returns (uint256) {
         uint256 pos = getFromQueueByID(msg.sender);
         return pos;
     }
     //текущая длина при записи
-    function getCurrLen() external returns (uint256) {
+    function getCurrLen() external view returns (uint256) {
         return queueList.length;
-    }
-    //максимальное кол-во участников
-    function getLenLimit() external returns (uint256){
-        return maxParticipants;
-    }
-
-    function getStartTime() external returns (uint256){
-        return startTime;
-    }
-
-    function getEndTime() external returns (uint256){
-        return endTime;
     }
     //разрешение участнику поменятся в тобой местами
     function allowanceChangePosition(address whoCanChange) external {
