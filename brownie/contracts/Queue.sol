@@ -1,22 +1,30 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+//esp указывает с 1, pos=0 некорреткная позиция
 contract Queue {
+    //адрес-имя всех участников
     mapping(address => string) peoples;
-    mapping(address => uint256) allowanceTimeMap;
+
+    struct allowance {
+        address addr;
+        uint256 timestamp;
+    }
 
     event ParticipantAdded(address _address, string name, uint256 position);
     event ParticipantDeleted(address _address, string name, uint256 position);
+    event Allowance(address slave, address master);
     event ParticipantExchanged(address _address1, string name1, uint256 pos1, address _address2, string name2, uint256 pos2);
 
     string private _eventName;
 
-    uint256 startTime;
-    uint256 endTime;
-    uint256 maxParticipants;
-    uint256 timeoutForChangePosition = 5 minutes;
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 public maxParticipants;
+    uint256 constant TimeoutForChangePosition = 5 minutes;
     address payable owner;
     uint256 minFee = 0;
-    //указатель на текущего сдающего
+    //указатель на следующего сдающего
     uint256 ESP = 1;
     //    address[] paricipantsList;
     //пример 0x8D56f551b44a6dA6072a9608d63d664ce67681a5 -- место 1
@@ -24,45 +32,51 @@ contract Queue {
     address[] queueList;
     //у кого есть права поменяться местами(master-slave) те Петя должен вызвать changePosition()
     //пример Петя(0x8D56f551b44a6dA6072a9608d63d664ce67681a5) -- Вася(0x9CA585bCc394E71A239f59bcF31F32fDB878738C)
-    mapping(address => address) allowanceList;
+    mapping(address => allowance) allowanceList;
     //проверим что запись уже доступна и еще не завершена
     modifier checkTime() {
-        require(now < endTime, "Event already finished");
-        require(now > startTime, "Event doesn't started");
+        require(block.timestamp < endTime, "Event already finished");
+        require(block.timestamp > startTime, "Event doesn't started");
         _;
     }
     //чекнем огранчения на кол-во участников
     modifier checkMaxParticipants() {
-        require(paricipantsList.length < maxParticipants, "A lot of members");
+        require(queueList.length < maxParticipants, "A lot of members");
         _;
     }
     //чекнем огранчения на размер минимального платежа
-    modifier checkMinFee() {
-        require(msg.value > minFee, "Too small payment");
+    modifier checkMinFee(uint256 currPayment) {
+        require(currPayment >= minFee, "Too small payment");
+        _;
+    }
+    //чекнем огранчения на таймаут обмена позициями
+    modifier checkAllowance(address slave) {
+        require(allowanceList[msg.sender].addr == slave, "Inccorrect slave address");
+        require(block.timestamp - allowanceList[msg.sender].timestamp <= TimeoutForChangePosition, "Timeout for change position");
         _;
     }
 
 
-    constructor(uint256 start, uint256 end, string title, uint256 maxLength, uint256 _minFee){
-        require(now < start, "Event must not have already begun");
-        require(now > end, "Event must not have already finished");
+    constructor(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee){
+        require(block.timestamp < start, "Event must not have already begun");
+        require(block.timestamp > end, "Event must not have already finished");
         startTime = start;
         endTime = end;
         _eventName = title;
         maxParticipants = maxLength;
         minFee = _minFee;
     }
-    //вернет указатель на последнего сдавшего
-    function getLastCompletePosition() external view returns (uint256) {
+    //вернет указатель на следующего сдающего
+    function getNextCompletePosition() external view returns (uint256) {
         return ESP;
     }
     //моя позиция в очереди
     function getMyPosition() external returns (uint256) {
         uint256 pos = getFromQueueByID(msg.sender);
-        return queueList[pos];
+        return pos;
     }
     //текущая длина при записи
-    function getCurrLen() external {
+    function getCurrLen() external returns (uint256) {
         return queueList.length;
     }
     //максимальное кол-во участников
@@ -79,13 +93,14 @@ contract Queue {
     }
     //разрешение участнику поменятся в тобой местами
     function allowanceChangePosition(address whoCanChange) external {
-        require(address != address(0));
-        allowanceList[whoCanChange] = msg.sender;
+        require(whoCanChange != address(0));
+        allowanceList[whoCanChange].addr = msg.sender;
+        allowanceList[whoCanChange].timestamp = block.timestamp;
+        emit Allowance(msg.sender, whoCanChange);
     }
     //обмен местами с другом
-    //todo нужно разрешение и скинуть евент что поменялись
-    function changePosition(address whoIamChanging) external {
-        require(allowanceList[msg.sender] == whoIamChanging, "You haven't allowance to change");
+    function changePosition(address whoIamChanging) external
+    checkAllowance(whoIamChanging) {
         uint256 pos1 = getFromQueueByID(msg.sender);
         uint256 pos2 = getFromQueueByID(whoIamChanging);
         address temp = queueList[pos1];
@@ -96,27 +111,30 @@ contract Queue {
     }
 
     //записаться в очередь
-    function addToQueue(string name) external
-    checkMinFee
-    {
+    function addToQueue(string memory name) public payable
+    checkMinFee(msg.value) {
         peoples[msg.sender] = name;
         queueList.push(msg.sender);
+        if (msg.value > 0)
+            owner.transfer(msg.value);
     }
     //выписаться из очереди
     function delFromQueue() external {
-        peoples[msg.sender] = "";
+        delete peoples[msg.sender];
         uint256 pos = getFromQueueByID(msg.sender);
-        queueList[pos] = 0;
+        queueList[pos] = address(0);
     }
     //сказать всем, что сдал лабу
     function completeTask() external {
         ESP += 1;
+        if (ESP == queueList.length + 1)
+            finalayze();
     }
 
     //сбросить очередь
     function purifyQueue() external {
         ESP = 1;
-        queueList = new uint256[](0);
+        delete queueList;
     }
     //завершить все действия с контрактом, после того как все сдали лабы
     function finalayze() private {
@@ -124,15 +142,15 @@ contract Queue {
     }
 
     function getFromQueueByID(address addr) private view returns (uint256){
-        for (uint i = 0; i < arrayLength; i++) {
+        for (uint i = 0; i < queueList.length; i++) {
             if (queueList[i] == addr)
                 return i;
         }
         return 0;
     }
-    //receive() external payable  {
-    //owner.transfer()
-    //emit PaymentReceived(msg.sender, msg.value);
-    //}
+
+    receive() external payable {
+        owner.transfer(msg.value);
+    }
 
 }
