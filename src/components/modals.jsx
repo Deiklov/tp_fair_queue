@@ -1,7 +1,9 @@
-import {Button, Modal, Row, Col, Divider} from "antd";
+import {Button, Modal, Row, Col, Divider, Input} from "antd";
 import React from "react";
+import web3 from '../web3';
+import storehash from "../storehash";
 
-const Modals = () => {
+const Modals = (props) => {
     const [visible, setVisible] = React.useState(false);
     const [confirmLoading, setConfirmLoading] = React.useState(false);
     const [modalText, setModalText] = React.useState('Choose params to new queue');
@@ -9,7 +11,18 @@ const Modals = () => {
     const [confirmLoading2, setConfirmLoading2] = React.useState(false);
     const [modalText2, setModalText2] = React.useState('Enter contract queue address');
     const style = {background: '#0092ff', padding: '8px 0'};
+    const [inputData, setinputData] = React.useState("0x3194cBDC3dbcd3E11a07892e7bA5c3394048Cc87");
 
+    const loadEtheriumData = async (data) => {
+        const accounts = await web3.eth.getAccounts();
+        console.log(accounts);
+        const result = await storehash.methods.eventName().call({
+            from: accounts[0]
+        });
+        props.setEvent(result);
+        console.log(result)
+
+    };
     return (
         <>
             <Row gutter={{xs: 8, sm: 16, md: 24, lg: 32}}>
@@ -35,12 +48,16 @@ const Modals = () => {
             </Modal>
 
             <Modal
-                title="Create new queue"
+                title="Join to exist queue"
                 visible={visible2}
-                onOk={() => setVisible2(false)}
+                onOk={async () => {
+                    await loadEtheriumData(inputData);
+                    await setVisible2(false);
+                }}
                 onCancel={() => setVisible2(false)}
             >
                 <p>{modalText2}</p>
+                <Input placeholder={inputData} onChange={(e) => setinputData(e.target.value)}/>
             </Modal>
         </>
     )

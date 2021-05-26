@@ -6,6 +6,10 @@ import time
 
 # https://github.com/mixbytes/brownie-example
 
+def test_false(accounts, contract):
+    assert False
+
+
 def test_check_getters(accounts, contract):
     start_time = contract.startTime()
     end_time = contract.endTime()
