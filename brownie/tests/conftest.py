@@ -11,5 +11,5 @@ def isolate(fn_isolation):
 
 @pytest.fixture(scope="module")
 def contract(Queue, accounts):
-    return Queue.deploy(int(time.time()) + 1000, int(time.time()) + 1 * 10 ** 6, "Test queue", 20, 0,
+    return Queue.deploy(int(time.time()) , int(time.time()) + 1 * 10 ** 6, "Test queue", 20, 0,
                         {'from': accounts[0]})
