@@ -1,5 +1,5 @@
 import {Button, Modal, Row, Col, Form, Input, DatePicker, InputNumber} from "antd";
-import React from "react";
+import React, {useState, useEffect} from 'react';
 import web3 from '../web3';
 import storehash from "../storehash";
 
@@ -11,7 +11,6 @@ const Modals = (props) => {
     const [visible2, setVisible2] = React.useState(false);
     const [confirmLoading2, setConfirmLoading2] = React.useState(false);
     const [modalText2, setModalText2] = React.useState('Enter contract queue address');
-    const style = {background: '#0092ff', padding: '8px 0'};
     const [inputData, setinputData] = React.useState("0x3194cBDC3dbcd3E11a07892e7bA5c3394048Cc87");
 
     const loadEtheriumData = async (data) => {
@@ -46,17 +45,17 @@ const Modals = (props) => {
             });
         props.setData(resultData);
 
+
         storehash.events.ParticipantAdded()
             .on('data', (event) => {
                 console.log(event);
-                resultData.push({
+                props.setData(resultData.concat({
                     key: parseInt(event.returnValues.position),
                     position: parseInt(event.returnValues.position),
                     name: event.returnValues.name,
                     address: event.returnValues._address,
-                });
+                }));
                 console.log(resultData);
-                props.setData(resultData);
             })
             .on('error', console.error);
 
