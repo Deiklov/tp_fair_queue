@@ -13,6 +13,7 @@ const {Header, Content, Footer} = Layout;
 
 const App = () => {
     const [eventName, seteventName] = React.useState("default Event");
+    const [tableData, settableData] = React.useState([]);
 
     return (
         <Layout className="layout">
@@ -25,8 +26,8 @@ const App = () => {
             />
             <Content style={{padding: '0 50px', margin: '16px 0'}}>
                 <div className="site-layout-content">
-                    <Modals setEvent={seteventName}/>
-                    <TableSheet eventName={eventName}/>
+                    <Modals setEvent={seteventName} setData={settableData}/>
+                    <TableSheet eventName={eventName} data={tableData}/>
                 </div>
             </Content>
             <Footer style={{textAlign: 'center'}}>Ant Design ©2018 Created by Ant UED</Footer>

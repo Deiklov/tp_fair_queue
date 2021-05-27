@@ -11,7 +11,6 @@ contract Queue {
     }
 
     event ParticipantAdded(address _address, string name, uint256 position);
-    event ParticipantDeleted(address _address, string name, uint256 position);
     event TaskCompleted(uint256 oldPos, uint256 newPos);
     event Allowance(address slave, address master);
     event Finalization(address lastAdr, string lastName, uint256 totalLength);
@@ -105,6 +104,7 @@ contract Queue {
     function addToQueue(string memory name) public payable
     checkMinFee(msg.value) checkMaxParticipants checkTime returns (uint256){
         //добавляем в конце очереди
+        require(keccak256(bytes(peoples[msg.sender])) == keccak256(bytes("")), "Participant already exist in queue");
         queueList.push(msg.sender);
         peoples[msg.sender] = name;
         //если шлет эфир, то сразу владельцу контракта отправляем

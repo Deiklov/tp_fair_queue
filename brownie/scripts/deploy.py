@@ -8,5 +8,6 @@ def main():
     ctrct = Queue.deploy(int(time.time()), int(time.time()) + 1 * 10 ** 8, "Test queue", 20, 0,
                          {'from': accounts[0]})
 
-    print(ctrct.address)
-    return ctrct.address
+    ctrct.addToQueue("Dmitry Shrekov", {'from': accounts[2]})
+    ctrct.addToQueue("Kek mdaaa", {'from': accounts[3]})
+    assert False

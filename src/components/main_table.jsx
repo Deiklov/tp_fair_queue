@@ -4,15 +4,15 @@ import React from 'react';
 const dataSource = [
     {
         key: '1',
-        name: 'Mike',
-        age: 32,
-        address: '10 Downing Street',
+        position: '1',
+        name: "eagle",
+        address: '0xdaddada',
     },
     {
         key: '2',
-        name: 'John',
-        age: 42,
-        address: '10 Downing Street',
+        position: '2',
+        name: "chicken",
+        address: '0xdaddadaadda',
     },
 ];
 
@@ -34,5 +34,5 @@ const columns = [
     },
 ];
 
-const TableSheet = (props) => <Table dataSource={dataSource} columns={columns} bordered title={() => props.eventName}/>;
+const TableSheet = (props) => <Table dataSource={props.data} columns={columns} bordered title={() => props.eventName}/>;
 export default TableSheet;
