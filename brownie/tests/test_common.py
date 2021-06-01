@@ -7,9 +7,12 @@ import time
 # https://github.com/mixbytes/brownie-example
 
 def test_factory(accounts, contract):
-    # addr = contract.createQueue(int(time.time()), int(time.time()) + 1 * 10 ** 6, "Test queue", 20, 0,
-    #                             {'from': accounts[0]})
-    assert False
+    # addr = contract.createQueue({'from': accounts[0]})
+
+    addr = contract.createQueue(int(time.time()), int(time.time()) + 1 * 10 ** 6, "test queue", 20, 0,
+                                {'from': accounts[0]})
+    accounts[1].transfer("0x8270743b9D7BA4d78DF4d30F78AD5f934Fe00Ec4", 10000000000000000000)
+    assert False == addr
 
 
 #

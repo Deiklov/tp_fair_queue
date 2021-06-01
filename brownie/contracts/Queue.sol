@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 contract Factory {
-    Queue[] public children;
+    mapping(address => Queue)public children;
 
     event QueueCreated(address ctrctAdr, address ownerAdr);
 
     function createQueue(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee) external returns (address){
-        Queue child = new Queue(start, end, title, maxLength, _minFee, msg.sender);
-        children.push(child);
-        emit QueueCreated(address(child), msg.sender);
-        return address(child);
+        children[msg.sender] = new Queue(start, end, title, maxLength, _minFee, msg.sender);
+        //        Queue child = new Queue(start, end, "kek", maxLength, _minFee, msg.sender);
+        //        children.push(address(child));
+        //        emit QueueCreated(address(child), msg.sender);
+        return address(this);
     }
+
 }
 
 contract Queue {
@@ -35,7 +37,7 @@ contract Queue {
     uint256 public endTime;
     uint256 public maxParticipants;
     uint256 constant TimeoutForChangePosition = 5 minutes;
-    address payable owner;
+    address  owner;
     uint256 minFee = 0;
     //указатель на текущего сдающего
     uint256 ESP = 0;
@@ -78,7 +80,7 @@ contract Queue {
         eventName = title;
         maxParticipants = maxLength;
         minFee = _minFee;
-        owner = payable(_owner);
+        owner = _owner;
     }
     //вернет указатель на текущего сдающего
     function getCurrCompletePosition() external view returns (uint256) {
@@ -122,8 +124,10 @@ contract Queue {
         queueList.push(msg.sender);
         peoples[msg.sender] = name;
         //если шлет эфир, то сразу владельцу контракта отправляем
-        if (msg.value > 0)
+        if (msg.value > 0) {
             owner.transfer(msg.value);
+
+        }
 
         emit ParticipantAdded(msg.sender, name, queueList.length - 1);
         return queueList.length - 1;

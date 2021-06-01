@@ -17,12 +17,24 @@ const Modals = (props) => {
 
 
     const loadEtheriumData = async (address) => {
-        const queue = new web3.eth.Contract(abiQueue, address);
+        if (!address) {
+            address = window.localStorage.getItem(addrKey);
+        }
+        console.log("address from localstorage", address);
         const accounts = await web3.eth.getAccounts();
-        console.log(accounts);
-        const eventName = await queue.methods.eventName().call({
-            from: accounts[0]
+
+        const queue = new web3.eth.Contract(abiQueue, address, {
+            from: accounts[0], // default from address
+            gasPrice: '0' // default gas price in wei, 20 gwei in this case
         });
+        console.log(queue);
+        console.log(accounts);
+        const eventName = await queue.methods.eventName().call((err, result) => {
+            console.log(result);
+            console.log(err);
+
+        });
+        console.log(eventName);
         props.setEvent(eventName);
 
         // const addtoqueue = await storehash.methods.addToQueue("adnrey kekmda").send({
@@ -37,6 +49,13 @@ const Modals = (props) => {
         const participantAddreses = await queue.methods.getParticipantAddresses().call({
             from: accounts[0]
         });
+        const test = await queue.methods.addToQueue("osel").send({
+            from: accounts[0],
+            value: 10000
+
+        });
+        console.log(test);
+
 
         if (participantAddreses)
             participantAddreses.map((item, i, arr) => {
@@ -71,27 +90,26 @@ const Modals = (props) => {
 
     };
 
-    if (window.localStorage.getItem(addrKey)) {
-        loadEtheriumData(window.localStorage.getItem(addrKey))
-    }
 
     const createCtrct = async (fieldsValue) => {
-            const StartTime = parseInt((new Date(Date.parse(fieldsValue['StartTime']))).getTime() / 1000).toFixed(0);
-            const EndTime = parseInt((new Date(Date.parse(fieldsValue['EndTime']))).getTime() / 1000).toFixed(0);
+            const StartTime = parseInt((new Date(Date.parse(fieldsValue['StartTime']))).getTime() / 1000);
+            const EndTime = parseInt((new Date(Date.parse(fieldsValue['EndTime']))).getTime() / 1000);
             const evName = fieldsValue['EventName'];
             const maxPart = fieldsValue['Max_participant'];
             const minFee = fieldsValue['Min_fee'];
-            console.log(fieldsValue);
-            console.log("start time: ", StartTime);
+            console.log(StartTime, EndTime, evName, maxPart, minFee);
+
 
             const accounts = await web3.eth.getAccounts();
 
-            const deployedCtrctAddres = await factory.methods.createQueue(StartTime, EndTime, evName, maxPart, minFee).call({
+            const deployedCtrctAddres = await factory.methods.createQueue(StartTime, EndTime, evName, maxPart, minFee).send({
                 from: accounts[0],
-                gasPrice: '0'
+                gasPrice: '0',
+                gas: 1200000,
             });
-            window.localStorage.setItem(addrKey, deployedCtrctAddres);
-            console.log(deployedCtrctAddres)
+
+            await window.localStorage.setItem(addrKey, deployedCtrctAddres);
+            await console.log(deployedCtrctAddres)
 
         }
     ;
