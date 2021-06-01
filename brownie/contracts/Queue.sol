@@ -1,6 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+contract Factory {
+    Queue[] public children;
+
+    event QueueCreated(address ctrctAdr, address ownerAdr);
+
+    function createQueue(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee) external returns (address){
+        Queue child = new Queue(start, end, title, maxLength, _minFee, msg.sender);
+        children.push(child);
+        emit QueueCreated(address(child), msg.sender);
+        return address(child);
+    }
+}
+
 contract Queue {
     //адрес-имя всех участников
     mapping(address => string) peoples;
@@ -57,7 +70,7 @@ contract Queue {
     }
 
 
-    constructor(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee){
+    constructor(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee, address _owner){
         require(block.timestamp <= start, "Event must not have already begun");
         require(block.timestamp < end, "Event must not have already finished");
         startTime = start;
@@ -65,6 +78,7 @@ contract Queue {
         eventName = title;
         maxParticipants = maxLength;
         minFee = _minFee;
+        owner = payable(_owner);
     }
     //вернет указатель на текущего сдающего
     function getCurrCompletePosition() external view returns (uint256) {
@@ -148,7 +162,8 @@ contract Queue {
         revert("Participant with that address was not found");
     }
 
-    receive() external payable {
-        owner.transfer(msg.value);
-    }
+receive() external payable {
+owner.transfer(msg.value);
 }
+}
+

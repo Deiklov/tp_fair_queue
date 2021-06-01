@@ -6,9 +6,12 @@ import time
 
 # https://github.com/mixbytes/brownie-example
 
-# def test_false(accounts, contract):
-#     assert False
-#
+def test_factory(accounts, contract):
+    # addr = contract.createQueue(int(time.time()), int(time.time()) + 1 * 10 ** 6, "Test queue", 20, 0,
+    #                             {'from': accounts[0]})
+    assert False
+
+
 #
 # def test_check_getters(accounts, contract):
 #     start_time = contract.startTime()
@@ -31,7 +34,6 @@ def test_add_to_queue(accounts, contract):
     assert my_pos == 2
     assert my_pos_1 == 0
     assert False
-
 
 # def test_get_position_queue(accounts, contract):
 #     pos0 = contract.addToQueue("Andrey Romanov", {'from': accounts[1]})

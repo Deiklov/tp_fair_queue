@@ -1,6 +1,6 @@
 import web3 from './web3';
 
-const address = process.env.REACT_APP_ETH_CONTRACT_ADDRESS;
+// const address = process.env.REACT_APP_ETH_CONTRACT_ADDRESS;
 
 const abi = [
     {
@@ -29,6 +29,11 @@ const abi = [
                 "internalType": "uint256",
                 "name": "_minFee",
                 "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "_owner",
+                "type": "address"
             }
         ],
         "stateMutability": "nonpayable",
@@ -101,31 +106,6 @@ const abi = [
             }
         ],
         "name": "ParticipantAdded",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "_address",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "position",
-                "type": "uint256"
-            }
-        ],
-        "name": "ParticipantDeleted",
         "type": "event"
     },
     {
@@ -383,4 +363,4 @@ const abi = [
         "type": "receive"
     }
 ];
-export default new web3.eth.Contract(abi, address);
+export default abi;

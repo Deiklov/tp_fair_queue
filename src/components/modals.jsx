@@ -1,10 +1,12 @@
 import {Button, Modal, Row, Col, Form, Input, DatePicker, InputNumber} from "antd";
 import React, {useState, useEffect} from 'react';
 import web3 from '../web3';
-import storehash from "../storehash";
+import abiQueue from "../queueABI";
+import factory from "../factory";
 
 const Modals = (props) => {
     let resultData = [];
+    const addrKey = "accAddress";
     const [visible, setVisible] = React.useState(false);
     const [confirmLoading, setConfirmLoading] = React.useState(false);
     const [modalText, setModalText] = React.useState('Choose params to new queue');
@@ -13,10 +15,12 @@ const Modals = (props) => {
     const [modalText2, setModalText2] = React.useState('Enter contract queue address');
     const [inputData, setinputData] = React.useState("0x3194cBDC3dbcd3E11a07892e7bA5c3394048Cc87");
 
-    const loadEtheriumData = async (data) => {
+
+    const loadEtheriumData = async (address) => {
+        const queue = new web3.eth.Contract(abiQueue, address);
         const accounts = await web3.eth.getAccounts();
         console.log(accounts);
-        const eventName = await storehash.methods.eventName().call({
+        const eventName = await queue.methods.eventName().call({
             from: accounts[0]
         });
         props.setEvent(eventName);
@@ -27,10 +31,10 @@ const Modals = (props) => {
         // }, (error, transactionHash) => {
         //     console.log(transactionHash);
         // });
-        const participantNames = await storehash.methods.getParticipantNames().call({
+        const participantNames = await queue.methods.getParticipantNames().call({
             from: accounts[0]
         });
-        const participantAddreses = await storehash.methods.getParticipantAddresses().call({
+        const participantAddreses = await queue.methods.getParticipantAddresses().call({
             from: accounts[0]
         });
 
@@ -46,7 +50,7 @@ const Modals = (props) => {
         props.setData(resultData);
 
 
-        storehash.events.ParticipantAdded()
+        queue.events.ParticipantAdded()
             .on('data', (event) => {
                 console.log(event);
                 props.setData(resultData.concat({
@@ -66,12 +70,31 @@ const Modals = (props) => {
         //     .on('error', console.error);
 
     };
-    const createCtrct = async (fieldsValue) => {
-        const StartTime = fieldsValue['StartTime'];
-        const EndTime = fieldsValue['EndTime'];
-        console.log(fieldsValue)
 
-    };
+    if (window.localStorage.getItem(addrKey)) {
+        loadEtheriumData(window.localStorage.getItem(addrKey))
+    }
+
+    const createCtrct = async (fieldsValue) => {
+            const StartTime = parseInt((new Date(Date.parse(fieldsValue['StartTime']))).getTime() / 1000).toFixed(0);
+            const EndTime = parseInt((new Date(Date.parse(fieldsValue['EndTime']))).getTime() / 1000).toFixed(0);
+            const evName = fieldsValue['EventName'];
+            const maxPart = fieldsValue['Max_participant'];
+            const minFee = fieldsValue['Min_fee'];
+            console.log(fieldsValue);
+            console.log("start time: ", StartTime);
+
+            const accounts = await web3.eth.getAccounts();
+
+            const deployedCtrctAddres = await factory.methods.createQueue(StartTime, EndTime, evName, maxPart, minFee).call({
+                from: accounts[0],
+                gasPrice: '0'
+            });
+            window.localStorage.setItem(addrKey, deployedCtrctAddres);
+            console.log(deployedCtrctAddres)
+
+        }
+    ;
 
     return (
         <>
@@ -118,7 +141,7 @@ const Modals = (props) => {
                     >
                         <Input/>
                     </Form.Item>
-                    <Form.Item name="Max participant count" label="Max participant count" rules={[
+                    <Form.Item name="Max_participant" label="Max participant count" rules={[
                         {
                             type: 'number',
                             min: 0,
@@ -128,7 +151,7 @@ const Modals = (props) => {
                     >
                         <InputNumber/>
                     </Form.Item>
-                    <Form.Item name="Min fee" label="Min fee wei" rules={[
+                    <Form.Item name="Min_fee" label="Min fee wei" rules={[
                         {
                             type: 'number',
                             min: 0,
