@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 contract Factory {
     mapping(address => Queue)public children;
@@ -8,7 +8,6 @@ contract Factory {
 
     function createQueue(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee) external returns (address){
         children[msg.sender] = new Queue(start, end, title, maxLength, _minFee, msg.sender);
-        //        Queue child = new Queue(start, end, "kek", maxLength, _minFee, msg.sender);
         emit QueueCreated(children[msg.sender], msg.sender);
         return address(children[msg.sender]);
     }
@@ -37,10 +36,11 @@ contract Queue {
     uint256 public maxParticipants;
     uint256 constant TimeoutForChangePosition = 5 minutes;
     address  owner;
+    bool isFinished = false;
     uint256 minFee = 0;
     //указатель на текущего сдающего
     uint256 ESP = 0;
-    //    address[] paricipantsList;
+    //    address[] queueList;
     //пример 0x8D56f551b44a6dA6072a9608d63d664ce67681a5 -- место 1
     //пример 0x9CA585bCc394E71A239f59bcF31F32fDB878738C -- место 2
     address[] public queueList;
@@ -56,6 +56,10 @@ contract Queue {
     //чекнем огранчения на кол-во участников
     modifier checkMaxParticipants() {
         require(queueList.length < maxParticipants, "A lot of members");
+        _;
+    }
+    modifier checkIsFinished() {
+        require(!isFinished, "Event already finished");
         _;
     }
     //чекнем огранчения на размер минимального платежа
@@ -94,7 +98,7 @@ contract Queue {
         return queueList.length;
     }
     //разрешение участнику поменятся в тобой местами
-    function allowanceChangePosition(address whoCanChange) external checkTime {
+    function allowanceChangePosition(address whoCanChange) external checkTime checkIsFinished {
         require(whoCanChange != address(0));
         allowanceList[whoCanChange].addr = msg.sender;
         allowanceList[whoCanChange].timestamp = block.timestamp;
@@ -102,7 +106,7 @@ contract Queue {
     }
     //обмен местами с другом
     function changePosition(address whoIamChanging) external
-    checkAllowance(whoIamChanging) checkTime {
+    checkAllowance(whoIamChanging) checkTime checkIsFinished {
         uint256 pos1 = getFromQueueByID(msg.sender);
         uint256 pos2 = getFromQueueByID(whoIamChanging);
         //чтобы не менялись уже те кто сдал лабу
@@ -117,7 +121,7 @@ contract Queue {
 
     //записаться в очередь
     function addToQueue(string memory name) public payable
-    checkMinFee(msg.value) checkMaxParticipants checkTime returns (uint256){
+    checkMinFee(msg.value) checkMaxParticipants checkTime checkIsFinished returns (uint256){
         //добавляем в конце очереди
         require(keccak256(bytes(peoples[msg.sender])) == keccak256(bytes("")), "Participant already exist in queue");
         queueList.push(msg.sender);
@@ -127,15 +131,17 @@ contract Queue {
         return queueList.length - 1;
     }
 
-    //сказать всем, что сдал лабу, если пустой слот то пропускаем
-    function completeTask() external checkTime {
+    //сказать всем, что сдал лабу
+    function completeTask() external checkTime checkIsFinished {
         uint256 pos = getFromQueueByID(msg.sender);
         //чтобы не подтверждали другие участники
         require(pos == ESP, "Only one persone can confirm that position");
         ESP += 1;
         emit TaskCompleted(ESP - 1, ESP);
-        if (ESP == queueList.length)
+        if (ESP == queueList.length) {
+            finalayze();
             emit Finalization(msg.sender, peoples[msg.sender], queueList.length);
+        }
     }
 
     //список адресов участников
@@ -158,6 +164,10 @@ contract Queue {
                 return i;
         }
         revert("Participant with that address was not found");
+    }
+
+    function finalayze() private {
+        isFinished = true;
     }
 
     fallback() external {}

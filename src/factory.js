@@ -8,7 +8,7 @@ const abi = [
         "inputs": [
             {
                 "indexed": false,
-                "internalType": "address",
+                "internalType": "contract Queue",
                 "name": "ctrctAdr",
                 "type": "address"
             },
