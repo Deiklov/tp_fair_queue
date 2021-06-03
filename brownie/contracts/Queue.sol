@@ -4,14 +4,13 @@ pragma solidity ^0.8.0;
 contract Factory {
     mapping(address => Queue)public children;
 
-    event QueueCreated(address ctrctAdr, address ownerAdr);
+    event QueueCreated(Queue ctrctAdr, address ownerAdr);
 
     function createQueue(uint256 start, uint256 end, string memory title, uint256 maxLength, uint256 _minFee) external returns (address){
         children[msg.sender] = new Queue(start, end, title, maxLength, _minFee, msg.sender);
         //        Queue child = new Queue(start, end, "kek", maxLength, _minFee, msg.sender);
-        //        children.push(address(child));
-        //        emit QueueCreated(address(child), msg.sender);
-        return address(this);
+        emit QueueCreated(children[msg.sender], msg.sender);
+        return address(children[msg.sender]);
     }
 
 }
@@ -80,7 +79,7 @@ contract Queue {
         eventName = title;
         maxParticipants = maxLength;
         minFee = _minFee;
-        owner = _owner;
+        //        owner = _owner;
     }
     //вернет указатель на текущего сдающего
     function getCurrCompletePosition() external view returns (uint256) {
@@ -124,11 +123,6 @@ contract Queue {
         queueList.push(msg.sender);
         peoples[msg.sender] = name;
         //если шлет эфир, то сразу владельцу контракта отправляем
-        if (msg.value > 0) {
-            owner.transfer(msg.value);
-
-        }
-
         emit ParticipantAdded(msg.sender, name, queueList.length - 1);
         return queueList.length - 1;
     }
@@ -166,8 +160,6 @@ contract Queue {
         revert("Participant with that address was not found");
     }
 
-receive() external payable {
-owner.transfer(msg.value);
-}
+    fallback() external {}
 }
 

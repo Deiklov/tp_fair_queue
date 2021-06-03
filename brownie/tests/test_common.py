@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import brownie
-from brownie import exceptions
+from brownie import exceptions, Queue
 import time
 
 
@@ -11,7 +11,13 @@ def test_factory(accounts, contract):
 
     addr = contract.createQueue(int(time.time()), int(time.time()) + 1 * 10 ** 6, "test queue", 20, 0,
                                 {'from': accounts[0]})
-    accounts[1].transfer("0x8270743b9D7BA4d78DF4d30F78AD5f934Fe00Ec4", 10000000000000000000)
+    queueAddr = addr.events[0]['ctrctAdr']
+    queuenew = Queue.at(queueAddr)
+    pos0 = queuenew.addToQueue("Andrey Romanov", {'from': accounts[1]})
+    pos1 = queuenew.addToQueue("Dmitry Shrekov", {'from': accounts[2]})
+    pos2 = queuenew.addToQueue("Alex Pomazan", {'from': accounts[3]})
+    # в метмаск шлем деньги
+    accounts[1].transfer("0xb0Ea766e0D0160F6e97c5B0B8B7b63F34c783e8A", 10000000000000000000)
     assert False == addr
 
 

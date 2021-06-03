@@ -49,12 +49,12 @@ const Modals = (props) => {
         const participantAddreses = await queue.methods.getParticipantAddresses().call({
             from: accounts[0]
         });
-        const test = await queue.methods.addToQueue("osel").send({
-            from: accounts[0],
-            value: 10000
-
-        });
-        console.log(test);
+        // const test = await queue.methods.addToQueue("osel").send({
+        //     from: accounts[0],
+        //     value: 10000
+        //
+        // });
+        // console.log(test);
 
 
         if (participantAddreses)
@@ -108,7 +108,7 @@ const Modals = (props) => {
                 gas: 1200000,
             });
 
-            await window.localStorage.setItem(addrKey, deployedCtrctAddres);
+            await window.localStorage.setItem(addrKey, deployedCtrctAddres.events.QueueCreated.address);
             await console.log(deployedCtrctAddres)
 
         }

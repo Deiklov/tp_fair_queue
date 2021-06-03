@@ -1,6 +1,5 @@
 import web3 from './web3';
 
-// const address = process.env.REACT_APP_ETH_CONTRACT_ADDRESS;
 
 const abi = [
     {
@@ -169,6 +168,10 @@ const abi = [
         ],
         "name": "TaskCompleted",
         "type": "event"
+    },
+    {
+        "stateMutability": "nonpayable",
+        "type": "fallback"
     },
     {
         "inputs": [
@@ -357,10 +360,6 @@ const abi = [
         ],
         "stateMutability": "view",
         "type": "function"
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive"
     }
 ];
 export default abi;
